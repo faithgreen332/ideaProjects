@@ -1,0 +1,16 @@
+server:
+  port: 9000
+spring:
+  application:
+    name: faithgreen
+eureka:
+  instance:
+    hostname: server02
+#    prefer-ip-address: false
+  client:
+    # 注册中心不需要注册自己
+    register-with-eureka: true
+    # 注册中心不需要去检索服务
+    fetch-registry: true
+    service-url:
+      defaultZone: http://server02:9000/eureka/,http://server01:8000/eureka/
