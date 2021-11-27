@@ -105,7 +105,7 @@ public class SelectorThread implements Runnable {
             SocketChannel client = server.accept();
             client.configureBlocking(false);
             // 选择一个selector进行注册
-            stg.nextSelector(client);
+            stg.nextSelectorV2(client);
         } catch (IOException e) {
             e.printStackTrace();
         }
