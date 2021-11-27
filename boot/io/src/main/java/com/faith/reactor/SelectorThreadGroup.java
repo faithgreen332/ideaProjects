@@ -13,6 +13,13 @@ public class SelectorThreadGroup {
 
     AtomicInteger xid = new AtomicInteger(0);
 
+    // boss 里持有一个 worker 组
+    SelectorThreadGroup worker;
+
+    public void setWorker(SelectorThreadGroup worker) {
+        this.worker = worker;
+    }
+
     public SelectorThreadGroup(int num) {
         sts = new SelectorThread[num];
 
@@ -29,10 +36,32 @@ public class SelectorThreadGroup {
             server.bind(new InetSocketAddress(port));
 
             // 注册到那个selector 呢？
-            nextSelectorV2(server);
+            nextSelectorV3(server);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void nextSelectorV3(Channel c) {
+        try {
+            SelectorThread st;
+            if (c instanceof ServerSocketChannel) {
+                st = next();
+                st.lbq.put(c);
+                st.setWorker(worker);
+            } else {
+                st = next3();
+                st.lbq.put(c);
+            }
+            st.selector.wakeup();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private SelectorThread next3() {
+        int index = xid.incrementAndGet() % worker.sts.length;
+        return worker.sts[index];
     }
 
     /**

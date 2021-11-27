@@ -7,11 +7,18 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class SelectorThread implements Runnable {
+public class SelectorThread extends ThreadLocal<LinkedBlockingQueue<Channel>> implements Runnable {
 
     Selector selector = null;
-    LinkedBlockingQueue<Channel> lbq = new LinkedBlockingQueue<>();
+    LinkedBlockingQueue<Channel> lbq = get();// 既然是线程内的，逻辑固定，就放到 ThreadLocal 里
     SelectorThreadGroup stg;
+
+    SelectorThreadGroup worker;
+
+    @Override
+    protected LinkedBlockingQueue<Channel> initialValue() {
+        return this.lbq = new LinkedBlockingQueue<>();
+    }
 
     public SelectorThread(SelectorThreadGroup stg) {
         this.stg = stg;
@@ -105,10 +112,14 @@ public class SelectorThread implements Runnable {
             SocketChannel client = server.accept();
             client.configureBlocking(false);
             // 选择一个selector进行注册
-            stg.nextSelectorV2(client);
+            stg.nextSelectorV3(client);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
+
+    public void setWorker(SelectorThreadGroup worker) {
+        this.worker = worker;
     }
 }
